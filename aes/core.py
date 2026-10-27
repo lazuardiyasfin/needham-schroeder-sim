@@ -99,10 +99,22 @@ class AES:
         for c in range(4):
             s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
 
-            new_state[0][c] = self._x_times(s0) ^ (self._x_times(s1) ^ s1) ^ s2 ^ s3
-            new_state[1][c] = s0 ^ self._x_times(s1) ^ (self._x_times(s2) ^ s2) ^ s3
-            new_state[2][c] = s0 ^ s1 ^ self._x_times(s2) ^ (self._x_times(s3) ^ s3)
-            new_state[3][c] = (self._x_times(s0) ^ s0) ^ s1 ^ s2 ^ self._x_times(s3)
+            s0_02 = self._x_times(s0)
+            s1_02 = self._x_times(s1)
+            s2_02 = self._x_times(s2)
+            s3_02 = self._x_times(s3)
+
+            # b * {03} = b * ({02} + {01}) = b * {02} + b
+            s0_03 = s0_02 ^ s0
+            s1_03 = s1_02 ^ s1
+            s2_03 = s2_02 ^ s2
+            s3_03 = s3_02 ^ s3
+
+            new_state[0][c] = s0_02 ^ s1_03 ^ s2 ^ s3
+            new_state[1][c] = s0 ^ s1_02 ^ s2_03 ^ s3
+            new_state[2][c] = s0 ^ s1 ^ s2_02 ^ s3_03
+            new_state[3][c] = s0_03 ^ s1 ^ s2 ^ s3_02
+            
         return new_state
 
     def _inv_mix_columns(self, state):
