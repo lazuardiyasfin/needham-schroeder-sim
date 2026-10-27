@@ -42,6 +42,7 @@ class Bob:
             data = utils.recv_frame(conn)
         except (OSError, ValueError) as e:
             print(f"Error receiving frame: {e}")
+            self._close_session()
             return
 
         if data is None:
@@ -54,10 +55,12 @@ class Bob:
             fields = utils.decode(unpadded_data)
         except ValueError as e:
             print(f"Error decrypting or decoding ticket: {e}")
+            self._close_session()
             return
 
         if len(fields) != 2:
             print(f"Invalid ticket: expected 2 fields, got {len(fields)}")
+            self._close_session()
             return
 
         key_session, a_id = fields
