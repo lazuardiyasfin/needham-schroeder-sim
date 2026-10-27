@@ -1,3 +1,4 @@
+import argparse
 import secrets
 import socket
 import sys
@@ -114,6 +115,14 @@ class KDC:
             print(f"Unknown command: {cmd}")
         return True
 
-if __name__ == "__main__":
-    kdc = KDC()
+def main():
+    parser = argparse.ArgumentParser(description="Run the KDC server.")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+
+    kdc = KDC(host=args.host, port=args.port)
     kdc.run()
+
+if __name__ == "__main__":
+    main()
