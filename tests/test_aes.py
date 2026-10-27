@@ -1,6 +1,6 @@
 import unittest
 
-from aes import AES_ECB
+from crypto.aes.modes import AES_ECB
 
 
 class TestAESECBEncrypt(unittest.TestCase):

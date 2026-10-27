@@ -1,4 +1,6 @@
 class AES:
+    block_size = 16 
+
     S_BOX = (
         (0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76),
         (0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0),
@@ -193,7 +195,7 @@ class AES:
         """Encrypts a single 128-bit block of plaintext using the AES algorithm"""
         if not isinstance(plaintext, bytes):
             raise TypeError("Plaintext must be bytes.")
-        if len(plaintext) * 8 != 128:
+        if len(plaintext) != self.block_size:
             raise ValueError("Plaintext must have 128-bits size.")
 
         state = [[plaintext[r + 4 * c] for c in range(4)] for r in range(4)]
@@ -216,7 +218,7 @@ class AES:
         """Decrypts a single 128-bit block of ciphertext using the AES algorithm"""
         if not isinstance(ciphertext, bytes):
             raise TypeError("Ciphertext must be bytes.")
-        if len(ciphertext) * 8 != 128:
+        if len(ciphertext) != self.block_size:
             raise ValueError("Ciphertext must have 128-bits size.")
 
         state = [[ciphertext[r + 4 * c] for c in range(4)] for r in range(4)]

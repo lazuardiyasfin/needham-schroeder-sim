@@ -2,13 +2,15 @@ from .core import AES
 
 
 class AES_ECB:
+    block_size = AES.block_size
+
     def __init__(self, key):
         self.aes = AES(key)
 
     def encrypt(self, plaintext):
         if not isinstance(plaintext, bytes):
             raise TypeError("Plaintext must be bytes")
-        if len(plaintext) % 16 != 0:
+        if len(plaintext) % self.block_size != 0:
             raise ValueError("Plaintext must be a multiple of 16 bytes")
 
         ciphertext = bytearray()
@@ -23,7 +25,7 @@ class AES_ECB:
     def decrypt(self, ciphertext):
         if not isinstance(ciphertext, bytes):
             raise TypeError("Ciphertext must be bytes")
-        if len(ciphertext) % 16 != 0:
+        if len(ciphertext) % self.block_size != 0:
             raise ValueError("Ciphertext must be a multiple of 16 bytes")
 
         plaintext = bytearray()
