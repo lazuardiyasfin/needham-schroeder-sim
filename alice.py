@@ -77,7 +77,23 @@ class Alice:
             return
 
         try:
-            decrypted_response = AES_ECB(self.key_a).decrypt(response)
+            outer_fields = utils.decode(response)
+        except ValueError as e:
+            print(f"Error decoding response from KDC: {e}")
+            s.sock_kdc.close()
+            self.session = None
+            return
+
+        if len(outer_fields) != 2:
+            print(f"Invalid response from KDC: expected 2 fields, got {len(outer_fields)}")
+            s.sock_kdc.close()
+            self.session = None
+            return
+
+        encrypted_for_alice, encrypted_ticket = outer_fields
+
+        try:
+            decrypted_response = AES_ECB(self.key_a).decrypt(encrypted_for_alice)
             unpadded_response = pkcs7_unpad(decrypted_response, AES_ECB.block_size)
             fields = utils.decode(unpadded_response)
         except ValueError as e:
@@ -92,7 +108,7 @@ class Alice:
             self.session = None
             return
 
-        key_session, b_id, n_a_received, ticket = fields
+        key_session, _a_id, b_id, n_a_received = fields
         if n_a_received != s.n_a:
             print("Nonce mismatch in response.")
             s.sock_kdc.close()
@@ -100,7 +116,7 @@ class Alice:
             return
 
         s.key_session = key_session
-        s.ticket = ticket
+        s.ticket = encrypted_ticket
         s.sock_kdc.close()
         s.sock_kdc = None
         print(f"Received ticket for {b_id.decode()} with session key {key_session.hex()}")

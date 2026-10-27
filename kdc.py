@@ -56,10 +56,10 @@ class KDC:
         ticket_plaintext = utils.encode([session_key, id_a])
         ticket_encrypted = AES_ECB(key_b).encrypt(pkcs7_pad(ticket_plaintext, AES_ECB.block_size))
 
-        response_plaintext = utils.encode([session_key, id_b, n_a, ticket_encrypted])
+        response_plaintext = utils.encode([session_key, id_a, id_b, n_a])
         response_encrypted = AES_ECB(key_a).encrypt(pkcs7_pad(response_plaintext, AES_ECB.block_size))
 
-        return response_encrypted
+        return utils.encode([response_encrypted, ticket_encrypted])
 
     def set_key(self, id, hex):
         try:
