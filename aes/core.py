@@ -18,6 +18,25 @@ class AES:
         (0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16)
     )
 
+    INV_S_BOX = (
+        (0x52, 0x09, 0x6A, 0xD5, 0x30, 0x36, 0xA5, 0x38, 0xBF, 0x40, 0xA3, 0x9E, 0x81, 0xF3, 0xD7, 0xFB),
+        (0x7C, 0xE3, 0x39, 0x82, 0x9B, 0x2F, 0xFF, 0x87, 0x34, 0x8E, 0x43, 0x44, 0xC4, 0xDE, 0xE9, 0xCB),
+        (0x54, 0x7B, 0x94, 0x32, 0xA6, 0xC2, 0x23, 0x3D, 0xEE, 0x4C, 0x95, 0x0B, 0x42, 0xFA, 0xC3, 0x4E),
+        (0x08, 0x2E, 0xA1, 0x66, 0x28, 0xD9, 0x24, 0xB2, 0x76, 0x5B, 0xA2, 0x49, 0x6D, 0x8B, 0xD1, 0x25),
+        (0x72, 0xF8, 0xF6, 0x64, 0x86, 0x68, 0x98, 0x16, 0xD4, 0xA4, 0x5C, 0xCC, 0x5D, 0x65, 0xB6, 0x92),
+        (0x6C, 0x70, 0x48, 0x50, 0xFD, 0xED, 0xB9, 0xDA, 0x5E, 0x15, 0x46, 0x57, 0xA7, 0x8D, 0x9D, 0x84),
+        (0x90, 0xD8, 0xAB, 0x00, 0x8C, 0xBC, 0xD3, 0x0A, 0xF7, 0xE4, 0x58, 0x05, 0xB8, 0xB3, 0x45, 0x06),
+        (0xD0, 0x2C, 0x1E, 0x8F, 0xCA, 0x3F, 0x0F, 0x02, 0xC1, 0xAF, 0xBD, 0x03, 0x01, 0x13, 0x8A, 0x6B),
+        (0x3A, 0x91, 0x11, 0x41, 0x4F, 0x67, 0xDC, 0xEA, 0x97, 0xF2, 0xCF, 0xCE, 0xF0, 0xB4, 0xE6, 0x73),
+        (0x96, 0xAC, 0x74, 0x22, 0xE7, 0xAD, 0x35, 0x85, 0xE2, 0xF9, 0x37, 0xE8, 0x1C, 0x75, 0xDF, 0x6E),
+        (0x47, 0xF1, 0x1A, 0x71, 0x1D, 0x29, 0xC5, 0x89, 0x6F, 0xB7, 0x62, 0x0E, 0xAA, 0x18, 0xBE, 0x1B),
+        (0xFC, 0x56, 0x3E, 0x4B, 0xC6, 0xD2, 0x79, 0x20, 0x9A, 0xDB, 0xC0, 0xFE, 0x78, 0xCD, 0x5A, 0xF4),
+        (0x1F, 0xDD, 0xA8, 0x33, 0x88, 0x07, 0xC7, 0x31, 0xB1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xEC, 0x5F),
+        (0x60, 0x51, 0x7F, 0xA9, 0x19, 0xB5, 0x4A, 0x0D, 0x2D, 0xE5, 0x7A, 0x9F, 0x93, 0xC9, 0x9C, 0xEF),
+        (0xA0, 0xE0, 0x3B, 0x4D, 0xAE, 0x2A, 0xF5, 0xB0, 0xC8, 0xEB, 0xBB, 0x3C, 0x83, 0x53, 0x99, 0x61),
+        (0x17, 0x2B, 0x04, 0x7E, 0xBA, 0x77, 0xD6, 0x26, 0xE1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0C, 0x7D),
+    )
+
     RCON = (0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36)
 
     def __init__(self, key):
@@ -47,12 +66,24 @@ class AES:
             new_state.append(new_row)
         return new_state
 
+    def _inv_sub_bytes(self, state):
+        """Substitutes each byte in the state with its corresponding value from the inverse S-box"""
+        return [[self.INV_S_BOX[byte >> 4][byte & 0x0F] for byte in row] for row in state]
+
     @staticmethod
     def _shift_rows(state):
         """Cyclically shifts the last three rows of the state to the left"""
         new_state = [state[0][:]]
         for r in range(1, 4):
             new_state.append(state[r][r:] + state[r][:r])
+        return new_state
+
+    @staticmethod
+    def _inv_shift_rows(state):
+        """Cyclically shifts the last three rows of the state to the right"""
+        new_state = [state[0][:]]
+        for r in range(1, 4):
+            new_state.append(state[r][-r:] + state[r][:-r])
         return new_state
 
     @staticmethod
@@ -72,6 +103,48 @@ class AES:
             new_state[1][c] = s0 ^ self._x_times(s1) ^ (self._x_times(s2) ^ s2) ^ s3
             new_state[2][c] = s0 ^ s1 ^ self._x_times(s2) ^ (self._x_times(s3) ^ s3)
             new_state[3][c] = (self._x_times(s0) ^ s0) ^ s1 ^ s2 ^ self._x_times(s3)
+        return new_state
+
+    def _inv_mix_columns(self, state):
+        """Multiplies each column of the state by a fixed polynomial in GF(2^8) for decryption"""
+        new_state = [[0] * 4 for _ in range(4)]
+        for c in range(4):
+            s0, s1, s2, s3 = state[0][c], state[1][c], state[2][c], state[3][c]
+
+            s0_02 = self._x_times(s0); s0_04 = self._x_times(s0_02); s0_08 = self._x_times(s0_04)
+            s1_02 = self._x_times(s1); s1_04 = self._x_times(s1_02); s1_08 = self._x_times(s1_04)
+            s2_02 = self._x_times(s2); s2_04 = self._x_times(s2_02); s2_08 = self._x_times(s2_04)
+            s3_02 = self._x_times(s3); s3_04 = self._x_times(s3_02); s3_08 = self._x_times(s3_04)
+
+            # b * {09} = b * ({08} + {01}) = b * {08} + b
+            s0_09 = s0_08 ^ s0
+            s1_09 = s1_08 ^ s1
+            s2_09 = s2_08 ^ s2
+            s3_09 = s3_08 ^ s3
+
+            # b * {0b} = b * ({08} + {02} + {01}) = b * {08} + b * {02} + b
+            s0_0b = s0_08 ^ s0_02 ^ s0
+            s1_0b = s1_08 ^ s1_02 ^ s1
+            s2_0b = s2_08 ^ s2_02 ^ s2
+            s3_0b = s3_08 ^ s3_02 ^ s3
+
+            # b * {0d} = b * ({08} + {04} + {01}) = b * {08} + b * {04} + b
+            s0_0d = s0_08 ^ s0_04 ^ s0
+            s1_0d = s1_08 ^ s1_04 ^ s1
+            s2_0d = s2_08 ^ s2_04 ^ s2
+            s3_0d = s3_08 ^ s3_04 ^ s3
+
+            # b * {0e} = b * ({08} + {04} + {02}) = b * {08} + b * {04} + b * {02}
+            s0_0e = s0_08 ^ s0_04 ^ s0_02
+            s1_0e = s1_08 ^ s1_04 ^ s1_02
+            s2_0e = s2_08 ^ s2_04 ^ s2_02
+            s3_0e = s3_08 ^ s3_04 ^ s3_02
+
+            new_state[0][c] = s0_0e ^ s1_0b ^ s2_0d ^ s3_09
+            new_state[1][c] = s0_09 ^ s1_0e ^ s2_0b ^ s3_0d
+            new_state[2][c] = s0_0d ^ s1_09 ^ s2_0e ^ s3_0b
+            new_state[3][c] = s0_0b ^ s1_0d ^ s2_09 ^ s3_0e
+        
         return new_state
 
     @staticmethod
@@ -125,4 +198,27 @@ class AES:
         state = self._shift_rows(state)
         state = self._add_round_key(state, self.words[4*self.rounds:])
 
+        return bytes([state[r][c] for c in range(4) for r in range(4)])
+
+    def decrypt_block(self, ciphertext):
+        """Decrypts a single 128-bit block of ciphertext using the AES algorithm"""
+        if not isinstance(ciphertext, bytes):
+            raise TypeError("Ciphertext must be bytes.")
+        if len(ciphertext) * 8 != 128:
+            raise ValueError("Ciphertext must have 128-bits size.")
+
+        state = [[ciphertext[r + 4 * c] for c in range(4)] for r in range(4)]
+
+        state = self._add_round_key(state, self.words[4*self.rounds:])
+
+        for round in range(self.rounds - 1, 0, -1):
+            state = self._inv_shift_rows(state)
+            state = self._inv_sub_bytes(state)
+            state = self._add_round_key(state, self.words[4*round:4*(round+1)])
+            state = self._inv_mix_columns(state)
+
+        state = self._inv_shift_rows(state)
+        state = self._inv_sub_bytes(state)
+        state = self._add_round_key(state, self.words[:4])
+        
         return bytes([state[r][c] for c in range(4) for r in range(4)])

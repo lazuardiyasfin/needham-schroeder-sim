@@ -19,3 +19,18 @@ class AES_ECB:
             ciphertext.extend(encrypted_block)
 
         return bytes(ciphertext)
+
+    def decrypt(self, ciphertext):
+        if not isinstance(ciphertext, bytes):
+            raise TypeError("Ciphertext must be bytes")
+        if len(ciphertext) % 16 != 0:
+            raise ValueError("Ciphertext must be a multiple of 16 bytes")
+
+        plaintext = bytearray()
+
+        for i in range(0, len(ciphertext), 16):
+            block = ciphertext[i:i+16]
+            decrypted_block = self.aes.decrypt_block(block)
+            plaintext.extend(decrypted_block)
+
+        return bytes(plaintext)
