@@ -231,11 +231,17 @@ class Bob:
             self.show_all()
         elif command == "receive_message":
             self.receive_message()
+        elif command == "disconnect":
+            self.disconnect()
         elif command == "exit":
             return False
         else:
             print(f"Unknown command: {command}")
         return True
+
+    def disconnect(self):
+        self._close_session()
+        print("Disconnected from Alice.")
 
     def _cleanup(self):
         if self.sock is not None:
