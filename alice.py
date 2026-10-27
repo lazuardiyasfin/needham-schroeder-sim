@@ -304,11 +304,8 @@ class Alice:
         return True
 
     def disconnect(self):
-        if self.session is not None and self.session.sock_bob is not None:
-            self.session.sock_bob.close()
-            self.session.sock_bob = None
-            print("Disconnected from Bob.")
-        self.session = None
+        self._cleanup()
+        print("Disconnected.")
 
     def _cleanup(self):
         if self.session is not None:
